@@ -121,7 +121,7 @@ def get_recommendations(skills_string, level, interest, time_availability):
 
     # Sort projects in descending order so the
     # most relevant recommendations appear first.
-    scored_projects.sort(key=lambda item: item["score"], reverse=True)
+    scored_projects.sort(key=lambda item: (item["score"], item["project"].get("id", 0)), reverse=True)
 
     # Return only the project dicts, not the score metadata
     return [item["project"] for item in scored_projects[:MAX_RESULTS]]
