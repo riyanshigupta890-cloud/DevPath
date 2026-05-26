@@ -18,7 +18,7 @@ How to run:
     python hotel_management.py    
 
 Learning goals:
-    - Managing state using nested dictionaries and lists.
+    - Managing state using nested dictionaries for improved data clarity.
     - Implementing robust input validation for user data.
     - Structuring a menu-driven CLI application.
     - Handling basic business logic (billing, availability).
@@ -28,7 +28,7 @@ Roadmap:
     Step 2: Implement availability display and category filtering.
     Step 3: Build the booking engine with contact validation.
     Step 4: Create the cancellation and guest detail lookup logic.
-    Step 5: Wrap all logic in a persistent main menu loop.
+    Step 5: Wrap all logic in a persistent main menu loop.(Note: This version uses in-memory storage; data is not persistent.)
 """
 # ---------------------------------------------------------------------------
 # Core Logic & Initialization
@@ -53,8 +53,13 @@ def initialize_rooms():
     for base_no, (room_type, price) in config.items():
         for i in range(1, 11):
             room_no = base_no + i
-            # Structure: [Type, Price, Status, Guest_Data_Dict]
-            rooms[room_no] = [room_type, price, "Available", None]
+            # Structure: {type: str, price: int, status: str, guest_data: dict/None}
+            rooms[room_no] = {
+                "type": room_type,
+                "price": price,
+                "status": "Available",
+                "guest_data": None
+            }
             
     return rooms
 
@@ -70,8 +75,8 @@ def show_available_rooms():
     print("\n--- 1. Available Rooms ---")
     found = False
     for room_no, details in rooms.items():
-        if details[2] == "Available":
-            print(f"Room No: {room_no} | Type: {details[0]} | Price/Day: Rs. {details[1]}")
+        if details["status"] == "Available":
+            print(f"Room No: {room_no} | Type: {details['type']} | Price/Day: Rs. {details['price']}")
             found = True
     if not found:
         print(">> No rooms currently available.")
@@ -95,11 +100,11 @@ def book_room():
         return
 
     # Prevent double-booking of occupied rooms
-    if rooms[room_no][2] == "Booked":
+    if rooms[room_no]["status"] == "Booked":
         print(">> Room is already occupied. Please select another.")
         return
     
-    print(f"\nBooking Room {room_no} ({rooms[room_no][0]} @ Rs. {rooms[room_no][1]}/day)")
+    print(f"\nBooking Room {room_no} ({rooms[room_no]['type']} @ Rs. {rooms[room_no]['price']}/day)")
     name = input("Enter Guest Name: ").strip()
     contact = input("Enter Contact Number: ").strip()
     
@@ -123,12 +128,12 @@ def book_room():
         return
         
     # Automatic calculation of total billing
-    price_per_day = rooms[room_no][1]
+    price_per_day = rooms[room_no]["price"]
     total_price = price_per_day * days
 
     # Commit booking data to the dictionary
-    rooms[room_no][2] = "Booked"
-    rooms[room_no][3] = {
+    rooms[room_no]["status"] = "Booked"
+    rooms[room_no]["guest_data"] = {
         "Guest Name": name,
         "Contact": contact,
         "Days": days,
@@ -146,9 +151,9 @@ def cancel_booking():
         print(">> Invalid input.")
         return
 
-    if room_no in rooms and rooms[room_no][2] == "Booked":
-        rooms[room_no][2] = "Available"
-        rooms[room_no][3] = None
+    if room_no in rooms and rooms[room_no]["status"] == "Booked":
+        rooms[room_no]["status"] = "Available"
+        rooms[room_no]["guest_data"] = None
         print(f"✅ Booking for Room {room_no} cancelled. Room is now vacant.")
     else:
         print(f">> Room {room_no} is not currently booked.")
@@ -164,11 +169,11 @@ def search_by_type():
     
     found = False
     for room_no, details in rooms.items():
-        if details[0].lower() == room_type_search:
-            status = details[2]
+        if details["type"].lower() == room_type_search:
+            status = details["status"]
             # Ternary-style logic for guest display
-            guest = f"({details[3]['Guest Name']})" if status == "Booked" else ""
-            print(f"Room No: {room_no} | Status: {status} {guest} | Price/Day: Rs. {details[1]}")
+            guest = f"({details['guest_data']['Guest Name']})" if status == "Booked" else ""
+            print(f"Room No: {room_no} | Status: {status} {guest} | Price/Day: Rs. {details['price']}")
             found = True
 
     if not found:
@@ -181,13 +186,13 @@ def view_guest_details():
     except ValueError:
         return
 
-    if room_no in rooms and rooms[room_no][2] == "Booked":
-        guest = rooms[room_no][3]
+    if room_no in rooms and rooms[room_no]["status"] == "Booked":
+        guest = rooms[room_no]["guest_data"]
         print(f"\n--- Guest Details for Room {room_no} ---")
         print(f"Name: {guest['Guest Name']}")
         print(f"Contact: {guest['Contact']}")
         print(f"Stay Duration: {guest['Days']} days")
-        print(f"Total Billing: Rs. {guest['Total Price']} (Rs .{rooms[room_no][1]} x {guest['Days']})")
+        print(f"Total Billing: Rs. {guest['Total Price']} (Rs. {rooms[room_no]['price']} x {guest['Days']})")
     else:
         print(">> No active booking found for this room.")
 
@@ -212,10 +217,30 @@ def main_menu():
         elif choice == '4': search_by_type()
         elif choice == '5': view_guest_details()
         elif choice == '6':
-            print("\n👋 System Shutdown. Have a professional day!")
+            print("\n👋 System Shutdown. Note: Session data is not saved to disk.")
             break
         else:
             print("❌ Invalid selection.")
 
 if __name__ == "__main__":
     main_menu()
+
+# ---------------------------------------------------------------------------
+# Sample Validation Flow (Manual Test Cases)
+# ---------------------------------------------------------------------------
+"""
+1. Initialization: Run script -> Select '1'. 
+   Verify all rooms (101-410) show as 'Available'.
+   
+2. Booking Logic: Select '2' -> Book Room 101 for 2 days.
+   Verify 'Total Price' is Rs. 5000 (2500 * 2).
+
+3. Search Logic: Select '4' -> Search for 'Deluxe'.
+   Verify Room 101 now shows 'Booked' with the guest name.
+
+4. Guest Lookup: Select '5' -> Enter 101.
+   Verify guest contact and stay duration display correctly.
+
+5. Cancellation: Select '3' -> Enter 101.
+   Verify room returns to 'Available' status.
+"""
