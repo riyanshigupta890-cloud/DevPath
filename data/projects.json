@@ -364,7 +364,7 @@
 
   ,
   {
-    "id": 8,
+    "id": 12,
     "title": "Number Guessing Game",
     "skills": ["Python"],
     "level": "Beginner",
@@ -395,7 +395,7 @@
     "starter_code": "starter_code/number_guessing.py"
   },
   {
-    "id": 9,
+    "id": 13,
     "title": "Simple Email Automation",
     "skills": ["Python"],
     "level": "Beginner",
@@ -426,7 +426,7 @@
     "starter_code": "starter_code/email_automation.py"
   },
   {
-    "id": 10,
+    "id": 14,
     "title": "Quiz App",
     "skills": ["HTML", "CSS", "JavaScript"],
     "level": "Beginner",
